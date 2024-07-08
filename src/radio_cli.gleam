@@ -7,10 +7,10 @@ import gleam/string
 import pink
 import pink/attribute
 import pink/hook
-import player
+import player.{type Player}
 import remote_data as rd
 import song.{type Song}
-import station
+import station.{type Station, ChristianRock, GospelMix}
 
 type Timer
 
@@ -30,12 +30,14 @@ fn app() {
   let app = hook.app()
   let song = hook.state(rd.Loading)
   let timer = hook.state(option.None)
+  let selected_station = hook.state(GospelMix)
   let player =
     hook.state(
-      station.ChristianRock
+      selected_station.value
       |> station.stream
       |> player.new,
     )
+
   hook.input(
     fn(input, _key) {
       case input {
@@ -46,6 +48,18 @@ fn app() {
             False -> player.play
           }
           |> player.set
+        "j" | "J" if selected_station.value != GospelMix -> {
+          selected_station.set(GospelMix)
+
+          change_station(GospelMix, player, song, timer)
+        }
+
+        "k" | "K" if selected_station.value != ChristianRock -> {
+          selected_station.set(ChristianRock)
+
+          change_station(ChristianRock, player, song, timer)
+        }
+
         "q" | "Q" -> {
           player.quit(player.value)
           timer.value
@@ -63,38 +77,40 @@ fn app() {
       player.value
       |> player.play
       |> player.set
-      get_song(song, timer)
+      get_song(selected_station.value, song, timer)
       Nil
     },
     [],
   )
 
-  pink.box(
-    [
-      attribute.flex_direction(attribute.FlexColumn),
-      attribute.justify_content(attribute.ContentCenter),
-      attribute.align_items(attribute.ItemsCenter),
-      attribute.border_style(attribute.BorderRound),
-      attribute.width(
-        song.value
-        |> rd.to_option
-        |> option.map(fn(song) {
-          int.max(song.title |> string.length, song.artist |> string.length)
-          + 10
-        })
-        |> option.unwrap(50)
-        |> attribute.Spaces,
-      ),
-      // attribute.Spaces(50)
-      attribute.padding_x(4),
-    ],
-    [
-      pink.box([attribute.height(attribute.Spaces(1))], [
-        pink.text([], view_play_button(player.is_playing(player.value))),
-      ]),
-      view_song(song.value),
-    ],
-  )
+  pink.box([], [
+    view_stations(selected_station),
+    pink.box(
+      [
+        attribute.flex_direction(attribute.FlexColumn),
+        attribute.justify_content(attribute.ContentCenter),
+        attribute.align_items(attribute.ItemsCenter),
+        attribute.border_style(attribute.BorderRound),
+        attribute.width(
+          song.value
+          |> rd.to_option
+          |> option.map(fn(song) {
+            int.max(song.title |> string.length, song.artist |> string.length)
+            + 10
+          })
+          |> option.unwrap(20)
+          |> attribute.Spaces,
+        ),
+        attribute.padding_x(4),
+      ],
+      [
+        pink.box([attribute.height(attribute.Spaces(1))], [
+          pink.text([], view_play_button(player.is_playing(player.value))),
+        ]),
+        view_song(song.value),
+      ],
+    ),
+  ])
 }
 
 fn view_play_button(is_playing: Bool) {
@@ -113,7 +129,10 @@ fn view_song(song: rd.RemoteData(Song, String)) {
   case song {
     rd.NotAsked -> show_message([], "Song not loaded")
     rd.Loading ->
-      pink.text_nested([], [pink.spinner("dots"), pink.text([], " Loading")])
+      pink.text_nested([], [
+        pink.spinner("dots"),
+        pink.text([attribute.height(attribute.Spaces(2))], " Loading\n"),
+      ])
     rd.Failure(_) ->
       show_message([attribute.color("red")], "Failed to load song")
     rd.Success(song) ->
@@ -130,11 +149,38 @@ fn view_song(song: rd.RemoteData(Song, String)) {
   }
 }
 
+fn view_stations(station: hook.State(Station)) {
+  let selected_attributes = fn(station_) {
+    case station_ == station.value {
+      True -> [attribute.bold(True), attribute.underline(True)]
+      False -> []
+    }
+  }
+
+  pink.box(
+    [
+      attribute.border_style(attribute.BorderRound),
+      attribute.flex_direction(attribute.FlexColumn),
+    ],
+    [
+      pink.text(
+        selected_attributes(ChristianRock),
+        station.to_string(ChristianRock),
+      ),
+      pink.text(selected_attributes(GospelMix), station.to_string(GospelMix)),
+    ],
+  )
+}
+
+// Helper
+
 fn get_song(
+  station: Station,
   song_state: hook.State(rd.RemoteData(Song, String)),
   timer: hook.State(Option(Timer)),
 ) -> Nil {
-  song.get(station.ChristianRock)
+  station
+  |> station.get_song
   |> promise.tap(fn(result_song) {
     case result_song {
       Ok(new_song) ->
@@ -152,10 +198,31 @@ fn get_song(
     Error(fetch.UnableToReadBody)
   })
   |> promise.tap(fn(_) {
-    set_timeout(fn() { get_song(song_state, timer) }, 30_000)
+    set_timeout(fn() { get_song(station, song_state, timer) }, 30_000)
     |> option.Some
     |> timer.set
   })
+
+  Nil
+}
+
+fn change_station(
+  station: Station,
+  player: hook.State(Player),
+  song: hook.State(rd.RemoteData(Song, String)),
+  timer: hook.State(Option(Timer)),
+) {
+  song.set(rd.Loading)
+  player.quit(player.value)
+  station
+  |> station.stream
+  |> player.new
+  |> player.play
+  |> player.set
+
+  option.map(timer.value, clear_timeout)
+
+  set_timeout(fn() { get_song(station, song, timer) }, 0)
 
   Nil
 }
