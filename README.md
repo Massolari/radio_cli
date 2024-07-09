@@ -1,25 +1,27 @@
-# radio_cli
+# Radio CLI
 
-[![Package Version](https://img.shields.io/hexpm/v/radio_cli)](https://hex.pm/packages/radio_cli)
-[![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/radio_cli/)
+Terminal application to play radio stations that I like
 
-```sh
-gleam add radio_cli
-```
-```gleam
-import radio_cli
+![image](https://github.com/Massolari/radio_cli/assets/12272702/7d894cb3-5d2d-4676-a94c-635ecea0092f)
 
-pub fn main() {
-  // TODO: An example of the project in use
-}
-```
+It has two stations:
 
-Further documentation can be found at <https://hexdocs.pm/radio_cli>.
+- [Radio Gospel Mix](https://www.radiogospelmix.com.br/)
+- [ChristianRock.Net](https://www.christianrock.net/)
 
-## Development
+## Requirements
 
-```sh
-gleam run   # Run the project
-gleam test  # Run the tests
-gleam shell # Run an Erlang shell
-```
+- [Gleam](https://gleam.run)
+- [VLC](https://www.videolan.org/vlc/index.html)
+
+## Usage
+
+1. Clone the repository
+2. Run `gleam run`
+
+### Keys
+
+- `j` to select the next station
+- `k` to select the previous station
+- `q` to quit
+- `Space` to play/pause
