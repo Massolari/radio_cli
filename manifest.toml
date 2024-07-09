@@ -8,7 +8,7 @@ packages = [
   { name = "gleam_json", version = "2.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_json", source = "hex", outer_checksum = "CB10B0E7BF44282FB25162F1A24C1A025F6B93E777CCF238C4017E4EEF2CDE97" },
   { name = "gleam_stdlib", version = "0.38.0", build_tools = ["gleam"], requirements = [], otp_app = "gleam_stdlib", source = "hex", outer_checksum = "663CF11861179AF415A625307447775C09404E752FF99A24E2057C835319F1BE" },
   { name = "gleeunit", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleeunit", source = "hex", outer_checksum = "F7A7228925D3EE7D0813C922E062BFD6D7E9310F0BEE585D3A42F3307E3CFD13" },
-  { name = "pink", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_json", "gleam_stdlib"], source = "local", path = "../pink" },
+  { name = "pink", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_json", "gleam_stdlib"], otp_app = "pink", source = "hex", outer_checksum = "0CFD4D4BF8CCD96BCEF00CCB1A1E4DDF30F0F4FD5E03EDE78439F41C7051C50A" },
   { name = "remote_data", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "remote_data", source = "hex", outer_checksum = "0FBEE26C04C2DC79D196DEF9335B2E8DF1E2F70C346FFC600BD62BE679F5AFDB" },
 ]
 
@@ -19,5 +19,5 @@ gleam_javascript = { version = ">= 0.10.0 and < 1.0.0" }
 gleam_json = { version = ">= 2.0.0 and < 3.0.0" }
 gleam_stdlib = { version = ">= 0.34.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
-pink = { path = "../pink" }
+pink = { version = ">= 1.0.0 and < 2.0.0"}
 remote_data = { version = ">= 1.0.0 and < 2.0.0" }
