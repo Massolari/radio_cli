@@ -17,7 +17,8 @@ It has the following stations:
 ## Usage
 
 1. Clone the repository
-2. Run `gleam run`
+2. Run `yarn` to install the dependencies
+3. Run `gleam run`
 
 ### Keys
 
