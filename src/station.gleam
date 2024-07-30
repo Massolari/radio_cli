@@ -1,6 +1,5 @@
 import gleam/fetch
 import gleam/http/request
-import gleam/io
 import gleam/javascript/promise
 import gleam/result
 import song
@@ -8,12 +7,14 @@ import song
 pub type Station {
   ChristianRock
   GospelMix
+  LofiGirl
 }
 
 pub fn to_string(station: Station) {
   case station {
     ChristianRock -> "Christian Rock"
     GospelMix -> "Gospel Mix"
+    LofiGirl -> "Lofi Girl"
   }
 }
 
@@ -21,14 +22,8 @@ pub fn stream(station: Station) {
   case station {
     ChristianRock -> "https://listen.christianrock.net/stream/11/"
     GospelMix -> "https://servidor33-3.brlogic.com:8192/live"
-  }
-}
-
-pub fn playing(station: Station) {
-  case station {
-    ChristianRock -> "https://www.christianrock.net/iphonecrdn.php"
-    GospelMix ->
-      "https://d36nr0u3xmc4mm.cloudfront.net/index.php/api/streaming/status/8192/2e1cbe43529055ddda74868d2db9ae98/SV4BR"
+    LofiGirl ->
+      "https://www.youtube.com/embed/jfKfPfyJRdk?origin=https%3A%2F%2Flofimusic.app&autoplay=1&modestbranding=1&disablekb=1&iv_load_policy=3&playsinline=1"
   }
 }
 
@@ -36,14 +31,17 @@ pub fn get_song(station: Station) {
   case station {
     ChristianRock -> get_christian_rock()
     GospelMix -> get_gospel_mix()
+    LofiGirl ->
+      LofiGirl
+      |> get_no_song
+      |> Ok
+      |> promise.resolve
   }
 }
 
 fn get_christian_rock() {
   let assert Ok(request) =
-    ChristianRock
-    |> playing
-    |> request.to
+    request.to("https://www.christianrock.net/iphonecrdn.php")
 
   // Send the HTTP request to the server
   use response <- promise.try_await(
@@ -72,9 +70,9 @@ fn get_christian_rock() {
 
 fn get_gospel_mix() {
   let assert Ok(request) =
-    GospelMix
-    |> playing
-    |> request.to
+    request.to(
+      "https://d36nr0u3xmc4mm.cloudfront.net/index.php/api/streaming/status/8192/2e1cbe43529055ddda74868d2db9ae98/SV4BR",
+    )
 
   // Send the HTTP request to the server
   use response <- promise.try_await(
@@ -90,4 +88,8 @@ fn get_gospel_mix() {
   json.body
   |> song.gospel_mix_decoder
   |> result.map_error(fn(_err) { fetch.InvalidJsonBody })
+}
+
+fn get_no_song(station: Station) {
+  song.Song(artist: to_string(station), title: "No song information available")
 }

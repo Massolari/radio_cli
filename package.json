@@ -10,9 +10,6 @@
     "react": "^18.3.1",
     "vlcplayer-node": "^0.5.3"
   },
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
   "peerDependencies": {
     "typescript": "^5.0.0"
   }

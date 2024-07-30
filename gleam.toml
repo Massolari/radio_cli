@@ -1,6 +1,7 @@
 name = "radio_cli"
 version = "1.0.0"
 target = "javascript"
+gleam = ">= 0.32.0"
 
 # Fill out these fields if you intend to generate HTML documentation or publish
 # your project to the Hex package manager.
@@ -21,6 +22,8 @@ gleam_http = ">= 3.6.0 and < 4.0.0"
 gleam_javascript = ">= 0.10.0 and < 1.0.0"
 gleam_json = ">= 2.0.0 and < 3.0.0"
 pink = ">= 1.0.0 and < 2.0.0"
+zip_list = ">= 1.0.0 and < 2.0.0"
+esgleam = ">= 0.6.0 and < 1.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"

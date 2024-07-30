@@ -10,7 +10,11 @@ import pink/hook
 import player.{type Player}
 import remote_data as rd
 import song.{type Song}
-import station.{type Station, ChristianRock, GospelMix}
+import station.{type Station, ChristianRock, GospelMix, LofiGirl}
+import zip_list.{type ZipList}
+
+/// Time in milliseconds to wait before fetching the current song again
+const get_song_frequency = 30_000
 
 type Timer
 
@@ -30,10 +34,12 @@ fn app() {
   let app = hook.app()
   let song = hook.state(rd.Loading)
   let timer = hook.state(option.None)
-  let selected_station = hook.state(GospelMix)
+  let stations =
+    hook.state(zip_list.new([], ChristianRock, [GospelMix, LofiGirl]))
+  let selected = hook.state(zip_list.current(stations.value))
   let player =
     hook.state(
-      selected_station.value
+      selected.value
       |> station.stream
       |> player.new,
     )
@@ -48,16 +54,37 @@ fn app() {
             False -> player.play
           }
           |> player.set
-        "j" | "J" if selected_station.value != GospelMix -> {
-          selected_station.set(GospelMix)
+        "j" ->
+          stations.value
+          |> zip_list.next_warp
+          |> stations.set
 
-          change_station(GospelMix, player, song, timer)
-        }
+        "J" ->
+          stations.value
+          |> zip_list.last
+          |> stations.set
 
-        "k" | "K" if selected_station.value != ChristianRock -> {
-          selected_station.set(ChristianRock)
+        "k" ->
+          stations.value
+          |> zip_list.previous_warp
+          |> stations.set
 
-          change_station(ChristianRock, player, song, timer)
+        "K" ->
+          stations.value
+          |> zip_list.first
+          |> stations.set
+
+        "\r" -> {
+          let station = zip_list.current(stations.value)
+
+          case station == selected.value {
+            True -> Nil
+            False -> {
+              selected.set(station)
+              station
+              |> change_station(player, song, timer)
+            }
+          }
         }
 
         "q" | "Q" -> {
@@ -77,40 +104,50 @@ fn app() {
       player.value
       |> player.play
       |> player.set
-      get_song(selected_station.value, song, timer)
+
+      get_song(selected.value, song, timer)
       Nil
     },
     [],
   )
 
   pink.box([], [
-    view_stations(selected_station),
-    pink.box(
-      [
-        attribute.flex_direction(attribute.FlexColumn),
-        attribute.justify_content(attribute.ContentCenter),
-        attribute.align_items(attribute.ItemsCenter),
-        attribute.border_style(attribute.BorderRound),
-        attribute.width(
-          song.value
-          |> rd.to_option
-          |> option.map(fn(song) {
+    view_stations(selected, stations),
+    //
+    view_player(song, player),
+  ])
+}
+
+fn view_player(
+  song: hook.State(rd.RemoteData(Song, String)),
+  player: hook.State(Player),
+) {
+  pink.box(
+    [
+      attribute.flex_direction(attribute.FlexColumn),
+      attribute.justify_content(attribute.ContentCenter),
+      attribute.align_items(attribute.ItemsCenter),
+      attribute.border_style(attribute.BorderRound),
+      attribute.width(
+        case song.value {
+          rd.NotAsked -> 20
+          rd.Loading -> 20
+          rd.Success(song) ->
             int.max(song.title |> string.length, song.artist |> string.length)
             + 10
-          })
-          |> option.unwrap(20)
-          |> attribute.Spaces,
-        ),
-        attribute.padding_x(4),
-      ],
-      [
-        pink.box([attribute.height(attribute.Spaces(1))], [
-          pink.text([], view_play_button(player.is_playing(player.value))),
-        ]),
-        view_song(song.value),
-      ],
-    ),
-  ])
+          rd.Failure(error) -> string.length(error) + 10
+        }
+        |> attribute.Spaces,
+      ),
+      attribute.padding_x(4),
+    ],
+    [
+      pink.box([attribute.height(attribute.Spaces(1))], [
+        pink.text([], view_play_button(player.is_playing(player.value))),
+      ]),
+      view_song(song.value),
+    ],
+  )
 }
 
 fn view_play_button(is_playing: Bool) {
@@ -133,8 +170,7 @@ fn view_song(song: rd.RemoteData(Song, String)) {
         pink.spinner("dots"),
         pink.text([attribute.height(attribute.Spaces(2))], " Loading\n"),
       ])
-    rd.Failure(_) ->
-      show_message([attribute.color("red")], "Failed to load song")
+    rd.Failure(error) -> show_message([attribute.color("red")], error)
     rd.Success(song) ->
       pink.box(
         [
@@ -149,27 +185,46 @@ fn view_song(song: rd.RemoteData(Song, String)) {
   }
 }
 
-fn view_stations(station: hook.State(Station)) {
-  let selected_attributes = fn(station_) {
-    case station_ == station.value {
-      True -> [attribute.bold(True), attribute.underline(True)]
-      False -> []
-    }
-  }
-
+fn view_stations(
+  selected: hook.State(Station),
+  stations: hook.State(ZipList(Station)),
+) {
   pink.box(
     [
       attribute.border_style(attribute.BorderRound),
       attribute.flex_direction(attribute.FlexColumn),
     ],
     [
-      pink.text(
-        selected_attributes(ChristianRock),
-        station.to_string(ChristianRock),
-      ),
-      pink.text(selected_attributes(GospelMix), station.to_string(GospelMix)),
+      view_station(ChristianRock, selected, stations),
+      view_station(GospelMix, selected, stations),
+      view_station(LofiGirl, selected, stations),
     ],
   )
+}
+
+fn view_station(
+  station: Station,
+  selected: hook.State(Station),
+  stations: hook.State(ZipList(Station)),
+) {
+  let cursor = fn(station_) {
+    case station_ == zip_list.current(stations.value) {
+      True -> "> "
+      False -> "  "
+    }
+  }
+
+  let selected_attributes = fn(station_) {
+    case station_ == selected.value {
+      True -> [attribute.bold(True), attribute.underline(True)]
+      False -> []
+    }
+  }
+
+  pink.text_nested([], [
+    pink.text([], cursor(station)),
+    pink.text(selected_attributes(station), station.to_string(station)),
+  ])
 }
 
 // Helper
@@ -198,7 +253,10 @@ fn get_song(
     Error(fetch.UnableToReadBody)
   })
   |> promise.tap(fn(_) {
-    set_timeout(fn() { get_song(station, song_state, timer) }, 30_000)
+    set_timeout(
+      fn() { get_song(station, song_state, timer) },
+      get_song_frequency,
+    )
     |> option.Some
     |> timer.set
   })
