@@ -2,12 +2,13 @@
 
 Terminal application to play radio stations that I like
 
-![image](https://github.com/Massolari/radio_cli/assets/12272702/7d894cb3-5d2d-4676-a94c-635ecea0092f)
+![image](https://github.com/user-attachments/assets/e77d3a48-778c-407a-a569-387301a86b4a)
 
 It has the following stations:
 
 - [Radio Gospel Mix](https://www.radiogospelmix.com.br/)
 - [ChristianRock.Net](https://www.christianrock.net/)
+- [Lofi Girl](https://www.youtube.com/watch?v=jfKfPfyJRdk)
 
 ## Requirements
 
@@ -22,7 +23,10 @@ It has the following stations:
 
 ### Keys
 
-- `j` to select the next station
-- `k` to select the previous station
+- `j` to move the cursor to the next station
+- `J` to move the cursor to the last station
+- `k` to move the cursor to the previous station
+- `K` to move the cursor to the first station
+- `Enter` to select the station
 - `q` to quit
 - `Space` to play/pause
