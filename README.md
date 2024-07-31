@@ -2,12 +2,13 @@
 
 Terminal application to play radio stations that I like
 
-![image](https://github.com/user-attachments/assets/e77d3a48-778c-407a-a569-387301a86b4a)
+![image](https://github.com/user-attachments/assets/22f50a4b-b1d9-41cd-9a95-ee19ca07d633)
 
 It has the following stations:
 
 - [Radio Gospel Mix](https://www.radiogospelmix.com.br/)
 - [ChristianRock.Net](https://www.christianrock.net/)
+- [ChristianHits.Net](https://www.christianhits.net/)
 - [Lofi Girl](https://www.youtube.com/watch?v=jfKfPfyJRdk)
 
 ## Requirements

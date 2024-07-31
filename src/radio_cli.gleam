@@ -10,7 +10,7 @@ import pink/hook
 import player.{type Player}
 import remote_data as rd
 import song.{type Song}
-import station.{type Station, ChristianRock, GospelMix, LofiGirl}
+import station.{type Station, ChristianHits, ChristianRock, GospelMix, LofiGirl}
 import zip_list.{type ZipList}
 
 /// Time in milliseconds to wait before fetching the current song again
@@ -35,7 +35,9 @@ fn app() {
   let song = hook.state(rd.Loading)
   let timer = hook.state(option.None)
   let stations =
-    hook.state(zip_list.new([], ChristianRock, [GospelMix, LofiGirl]))
+    hook.state(
+      zip_list.new([], ChristianRock, [ChristianHits, GospelMix, LofiGirl]),
+    )
   let selected = hook.state(zip_list.current(stations.value))
   let player =
     hook.state(
@@ -196,6 +198,7 @@ fn view_stations(
     ],
     [
       view_station(ChristianRock, selected, stations),
+      view_station(ChristianHits, selected, stations),
       view_station(GospelMix, selected, stations),
       view_station(LofiGirl, selected, stations),
     ],

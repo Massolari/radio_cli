@@ -16,7 +16,7 @@ pub opaque type Player {
 }
 
 pub fn new(url: String) {
-  Player(url: url, is_playing: False, process: None)
+  Player(url:, is_playing: False, process: None)
 }
 
 pub fn play(player: Player) {
