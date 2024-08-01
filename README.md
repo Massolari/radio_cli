@@ -2,7 +2,7 @@
 
 Terminal application to play radio stations that I like
 
-![image](https://github.com/user-attachments/assets/22f50a4b-b1d9-41cd-9a95-ee19ca07d633)
+![image](https://github.com/user-attachments/assets/2d73b7d9-1ed3-49db-80c6-511b526b4905)
 
 It has the following stations:
 
@@ -10,6 +10,7 @@ It has the following stations:
 - [ChristianRock.Net](https://www.christianrock.net/)
 - [ChristianHits.Net](https://www.christianhits.net/)
 - [Lofi Girl](https://www.youtube.com/watch?v=jfKfPfyJRdk)
+- [Radio Melodia](https://www.melodia.com.br/)
 
 ## Requirements
 

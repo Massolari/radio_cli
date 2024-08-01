@@ -5,47 +5,51 @@ import gleam/result
 import song
 
 pub type Station {
-  ChristianRock
   ChristianHits
+  ChristianRock
   GospelMix
   LofiGirl
+  Melodia
 }
 
 pub fn to_string(station: Station) {
   case station {
-    ChristianRock -> "Christian Rock"
     ChristianHits -> "Christian Hits"
+    ChristianRock -> "Christian Rock"
     GospelMix -> "Gospel Mix"
     LofiGirl -> "Lofi Girl"
+    Melodia -> "Radio Melodia"
   }
 }
 
 pub fn stream(station: Station) {
   case station {
-    ChristianRock -> "https://listen.christianrock.net/stream/11/"
     ChristianHits -> "https://listen.christianrock.net/stream/12/"
+    ChristianRock -> "https://listen.christianrock.net/stream/11/"
     GospelMix -> "https://servidor33-3.brlogic.com:8192/live"
     LofiGirl ->
       "https://www.youtube.com/embed/jfKfPfyJRdk?origin=https%3A%2F%2Flofimusic.app&autoplay=1&modestbranding=1&disablekb=1&iv_load_policy=3&playsinline=1"
+    Melodia -> "https://14543.live.streamtheworld.com/MELODIAFMAAC.aac"
   }
 }
 
 pub fn get_song(station: Station) {
   case station {
-    ChristianRock -> get_christian_rock()
     ChristianHits -> get_christian_hits()
+    ChristianRock -> get_christian_rock()
     GospelMix -> get_gospel_mix()
     LofiGirl ->
       LofiGirl
       |> get_no_song
       |> Ok
       |> promise.resolve
+    Melodia -> get_melodia()
   }
 }
 
-fn get_christian_rock() {
+fn get_christian_hits() {
   let assert Ok(request) =
-    request.to("https://www.christianrock.net/iphonecrdn.php")
+    request.to("https://www.christianrock.net/iphonechdn.php")
 
   // Send the HTTP request to the server
   use response <- promise.try_await(
@@ -72,9 +76,9 @@ fn get_christian_rock() {
   |> result.map_error(fn(_err) { fetch.InvalidJsonBody })
 }
 
-fn get_christian_hits() {
+fn get_christian_rock() {
   let assert Ok(request) =
-    request.to("https://www.christianrock.net/iphonechdn.php")
+    request.to("https://www.christianrock.net/iphonecrdn.php")
 
   // Send the HTTP request to the server
   use response <- promise.try_await(
@@ -121,6 +125,25 @@ fn get_gospel_mix() {
   json.body
   |> song.gospel_mix_decoder
   |> result.map_error(fn(_err) { fetch.InvalidJsonBody })
+}
+
+fn get_melodia() {
+  let assert Ok(request) =
+    request.to(
+      "https://np.tritondigital.com/public/nowplaying?mountName=MELODIAFMAAC&numberToFetch=1&eventType=track",
+    )
+
+  // Send the HTTP request to the server
+  use response <- promise.try_await(
+    request
+    |> fetch.send,
+  )
+
+  use xml <- promise.map_try(fetch.read_text_body(response))
+
+  xml.body
+  |> song.melodia_decoder
+  |> result.map_error(fn(_err) { fetch.UnableToReadBody })
 }
 
 fn get_no_song(station: Station) {
