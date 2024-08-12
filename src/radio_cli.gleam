@@ -8,6 +8,7 @@ import pink
 import pink/attribute
 import pink/hook
 import player.{type Player}
+import plinth/javascript/global
 import remote_data as rd
 import song.{type Song}
 import station.{
@@ -18,14 +19,6 @@ import zip_list.{type ZipList}
 /// Time in milliseconds to wait before fetching the current song again
 const get_song_frequency = 30_000
 
-type Timer
-
-@external(javascript, "./ffi.mjs", "setTimeout")
-fn set_timeout(callback: fn() -> Nil, timeout: Int) -> Timer
-
-@external(javascript, "./ffi.mjs", "clearTimeout")
-fn clear_timeout(timer: Timer) -> Nil
-
 pub fn main() {
   pink.render(app())
 }
@@ -33,7 +26,8 @@ pub fn main() {
 fn app() {
   use <- pink.component()
 
-  let app = hook.app()
+  // let app = hook.app()
+  let hook.App(exit:) = hook.app()
   let song = hook.state(rd.Loading)
   let timer = hook.state(option.None)
   let stations =
@@ -99,8 +93,8 @@ fn app() {
         "q" | "Q" -> {
           player.quit(player.value)
           timer.value
-          |> option.map(fn(timer) { clear_timeout(timer) })
-          app.exit()
+          |> option.map(fn(timer) { global.clear_timeout(timer) })
+          exit()
         }
         _ -> Nil
       }
@@ -243,7 +237,7 @@ fn view_station(
 fn get_song(
   station: Station,
   song_state: hook.State(rd.RemoteData(Song, String)),
-  timer: hook.State(Option(Timer)),
+  timer: hook.State(Option(global.TimerID)),
 ) -> Nil {
   station
   |> station.get_song
@@ -264,10 +258,9 @@ fn get_song(
     Error(fetch.UnableToReadBody)
   })
   |> promise.tap(fn(_) {
-    set_timeout(
-      fn() { get_song(station, song_state, timer) },
-      get_song_frequency,
-    )
+    global.set_timeout(get_song_frequency, fn() {
+      get_song(station, song_state, timer)
+    })
     |> option.Some
     |> timer.set
   })
@@ -279,7 +272,7 @@ fn change_station(
   station: Station,
   player: hook.State(Player),
   song: hook.State(rd.RemoteData(Song, String)),
-  timer: hook.State(Option(Timer)),
+  timer: hook.State(Option(global.TimerID)),
 ) {
   song.set(rd.Loading)
   player.quit(player.value)
@@ -289,9 +282,9 @@ fn change_station(
   |> player.play
   |> player.set
 
-  option.map(timer.value, clear_timeout)
+  option.map(timer.value, global.clear_timeout)
 
-  set_timeout(fn() { get_song(station, song, timer) }, 0)
+  global.set_timeout(0, fn() { get_song(station, song, timer) })
 
   Nil
 }

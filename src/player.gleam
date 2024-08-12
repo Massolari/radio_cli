@@ -1,15 +1,7 @@
 import gleam/option.{type Option, None, Some}
-
-type ChildProcess {
-  ChildProcess(kill: fn() -> Nil, stdin: Stdin)
-}
-
-type Stdin {
-  Stdin(write: fn(String) -> Nil)
-}
-
-@external(javascript, "./player_ffi.mjs", "spawn_")
-fn spawn(command: String, arguments: List(String)) -> ChildProcess
+import gleam/result
+import plinth/node/child_process.{type ChildProcess}
+import plinth/node/stream
 
 pub opaque type Player {
   Player(url: String, is_playing: Bool, process: Option(ChildProcess))
@@ -21,9 +13,13 @@ pub fn new(url: String) {
 
 pub fn play(player: Player) {
   let new_process = case player.process {
-    None -> spawn("vlc", ["-I", "rc", player.url])
+    None -> child_process.spawn("vlc", ["-I", "rc", player.url])
     Some(process) -> {
-      process.stdin.write("play\n")
+      let _ =
+        process
+        |> child_process.stdin
+        |> result.map(stream.write(_, "play\n"))
+
       process
     }
   }
@@ -33,7 +29,11 @@ pub fn play(player: Player) {
 
 pub fn stop(player: Player) {
   player.process
-  |> option.map(fn(process) { process.stdin.write("stop\n") })
+  |> option.map(fn(process) {
+    process
+    |> child_process.stdin
+    |> result.map(stream.write(_, "stop\n"))
+  })
 
   Player(..player, is_playing: False)
 }
@@ -44,7 +44,7 @@ pub fn is_playing(player: Player) -> Bool {
 
 pub fn quit(player: Player) {
   player.process
-  |> option.map(fn(process) { process.kill() })
+  |> option.map(fn(process) { child_process.kill(process) })
 
   player
 }
