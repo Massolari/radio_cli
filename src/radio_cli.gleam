@@ -1,3 +1,4 @@
+import plinth/javascript/console
 import gleam/fetch
 import gleam/int
 import gleam/javascript/promise
@@ -20,6 +21,7 @@ import zip_list.{type ZipList}
 const get_song_frequency = 30_000
 
 pub fn main() {
+  console.clear()
   pink.render(app())
 }
 
