@@ -11,7 +11,7 @@ packages = [
   { name = "gleam_json", version = "2.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_json", source = "hex", outer_checksum = "CB10B0E7BF44282FB25162F1A24C1A025F6B93E777CCF238C4017E4EEF2CDE97" },
   { name = "gleam_stdlib", version = "0.39.0", build_tools = ["gleam"], requirements = [], otp_app = "gleam_stdlib", source = "hex", outer_checksum = "2D7DE885A6EA7F1D5015D1698920C9BAF7241102836CE0C3837A4F160128A9C4" },
   { name = "gleeunit", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleeunit", source = "hex", outer_checksum = "F7A7228925D3EE7D0813C922E062BFD6D7E9310F0BEE585D3A42F3307E3CFD13" },
-  { name = "pink", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_json", "gleam_stdlib"], otp_app = "pink", source = "hex", outer_checksum = "0CFD4D4BF8CCD96BCEF00CCB1A1E4DDF30F0F4FD5E03EDE78439F41C7051C50A" },
+  { name = "pink", version = "2.0.0", build_tools = ["gleam"], requirements = ["gleam_json", "gleam_stdlib"], otp_app = "pink", source = "hex", outer_checksum = "9C9EAB8DAB59C8C94097AAEA7C7240C79F7BC9A9AE56DABE38AD1AC197E0877D" },
   { name = "plinth", version = "0.4.12", build_tools = ["gleam"], requirements = ["conversation", "gleam_javascript", "gleam_json", "gleam_stdlib"], otp_app = "plinth", source = "hex", outer_checksum = "3727B517C05BD4D49A4AF34BA7E63E03CA77B4E8AD2A4DCE60266B28717C1F9A" },
   { name = "remote_data", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "remote_data", source = "hex", outer_checksum = "0FBEE26C04C2DC79D196DEF9335B2E8DF1E2F70C346FFC600BD62BE679F5AFDB" },
   { name = "simplifile", version = "1.7.0", build_tools = ["gleam"], requirements = ["filepath", "gleam_stdlib"], otp_app = "simplifile", source = "hex", outer_checksum = "1D5DFA3A2F9319EC85825F6ED88B8E449F381B0D55A62F5E61424E748E7DDEB0" },
@@ -26,7 +26,7 @@ gleam_javascript = { version = ">= 0.10.0 and < 1.0.0" }
 gleam_json = { version = ">= 2.0.0 and < 3.0.0" }
 gleam_stdlib = { version = ">= 0.34.0 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
-pink = { version = ">= 1.0.0 and < 2.0.0" }
+pink = { version = ">= 2.0.0 and < 3.0.0" }
 plinth = { version = ">= 0.4.12 and < 1.0.0" }
 remote_data = { version = ">= 1.0.0 and < 2.0.0" }
 zip_list = { version = ">= 1.0.0 and < 2.0.0" }

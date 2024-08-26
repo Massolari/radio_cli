@@ -1,8 +1,8 @@
 import gleam/fetch
 import gleam/http/request
-import gleam/javascript/promise
+import gleam/javascript/promise.{type Promise}
 import gleam/result
-import song
+import song.{type Song}
 
 pub type Station {
   ChristianHits
@@ -18,7 +18,7 @@ pub fn to_string(station: Station) {
     ChristianRock -> "Christian Rock"
     GospelMix -> "Gospel Mix"
     LofiGirl -> "Lofi Girl"
-    Melodia -> "Radio Melodia"
+    Melodia -> "Melodia"
   }
 }
 

@@ -10,7 +10,7 @@ It has the following stations:
 - [ChristianRock.Net](https://www.christianrock.net/)
 - [ChristianHits.Net](https://www.christianhits.net/)
 - [Lofi Girl](https://www.youtube.com/watch?v=jfKfPfyJRdk)
-- [Radio Melodia](https://www.melodia.com.br/)
+- [Melodia](https://www.melodia.com.br/)
 
 ## Requirements
 
@@ -26,9 +26,9 @@ It has the following stations:
 ### Keys
 
 - `j` to move the cursor to the next station
-- `J` to move the cursor to the last station
+- `G` to move the cursor to the last station
 - `k` to move the cursor to the previous station
-- `K` to move the cursor to the first station
+- `g` to move the cursor to the first station
 - `Enter` to select the station
 - `q` to quit
 - `Space` to play/pause

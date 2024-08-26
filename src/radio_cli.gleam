@@ -1,4 +1,3 @@
-import plinth/javascript/console
 import gleam/fetch
 import gleam/int
 import gleam/javascript/promise
@@ -6,9 +5,12 @@ import gleam/list
 import gleam/option.{type Option}
 import gleam/string
 import pink
+import pink/app
 import pink/attribute
 import pink/hook
+import pink/state.{type State}
 import player.{type Player}
+import plinth/javascript/console
 import plinth/javascript/global
 import remote_data as rd
 import song.{type Song}
@@ -28,12 +30,11 @@ pub fn main() {
 fn app() {
   use <- pink.component()
 
-  // let app = hook.app()
-  let hook.App(exit:) = hook.app()
-  let song = hook.state(rd.Loading)
-  let timer = hook.state(option.None)
+  let app = app.get()
+  let song = state.init(rd.Loading)
+  let timer = state.init(option.None)
   let stations =
-    hook.state(
+    state.init(
       zip_list.new([], ChristianRock, [
         ChristianHits,
         GospelMix,
@@ -41,51 +42,50 @@ fn app() {
         Melodia,
       ]),
     )
-  let selected = hook.state(zip_list.current(stations.value))
-  let player =
-    hook.state(
-      selected.value
-      |> station.stream
-      |> player.new,
-    )
+  let selected: State(Station) =
+    stations
+    |> state.get
+    |> zip_list.current
+    |> state.init
+
+  let player: State(Player) =
+    selected
+    |> state.get
+    |> station.stream
+    |> player.new
+    |> state.init
 
   hook.input(
     fn(input, _key) {
       case input {
         " " ->
-          player.value
-          |> case player.is_playing(player.value) {
-            True -> player.stop
-            False -> player.play
-          }
-          |> player.set
-        "j" ->
-          stations.value
-          |> zip_list.next_warp
-          |> stations.set
+          state.set_with(player, fn(player_value) {
+            player_value
+            |> case player.is_playing(player_value) {
+              True -> player.stop
+              False -> player.play
+            }
+          })
 
-        "J" ->
-          stations.value
-          |> zip_list.last
-          |> stations.set
+        "j" -> state.set_with(stations, zip_list.next_warp)
 
-        "k" ->
-          stations.value
-          |> zip_list.previous_warp
-          |> stations.set
+        "G" -> state.set_with(stations, zip_list.last)
 
-        "K" ->
-          stations.value
-          |> zip_list.first
-          |> stations.set
+        "k" -> state.set_with(stations, zip_list.previous_warp)
+
+        "g" -> state.set_with(stations, zip_list.first)
 
         "\r" -> {
-          let station = zip_list.current(stations.value)
+          let station =
+            stations
+            |> state.get
+            |> zip_list.current
 
-          case station == selected.value {
+          case station == state.get(selected) {
             True -> Nil
             False -> {
-              selected.set(station)
+              state.set(selected, station)
+
               station
               |> change_station(player, song, timer)
             }
@@ -93,10 +93,15 @@ fn app() {
         }
 
         "q" | "Q" -> {
-          player.quit(player.value)
-          timer.value
+          player
+          |> state.get
+          |> player.quit
+
+          timer
+          |> state.get
           |> option.map(fn(timer) { global.clear_timeout(timer) })
-          exit()
+
+          app.exit(app)
         }
         _ -> Nil
       }
@@ -106,11 +111,12 @@ fn app() {
 
   hook.effect(
     fn() {
-      player.value
-      |> player.play
-      |> player.set
+      state.set_with(player, player.play)
 
-      get_song(selected.value, song, timer)
+      selected
+      |> state.get
+      |> get_song(song, timer)
+
       Nil
     },
     [],
@@ -123,10 +129,9 @@ fn app() {
   ])
 }
 
-fn view_player(
-  song: hook.State(rd.RemoteData(Song, String)),
-  player: hook.State(Player),
-) {
+fn view_player(song: State(rd.RemoteData(Song, String)), player: State(Player)) {
+  let song_value = state.get(song)
+
   pink.box(
     [
       attribute.flex_direction(attribute.FlexColumn),
@@ -134,7 +139,7 @@ fn view_player(
       attribute.align_items(attribute.ItemsCenter),
       attribute.border_style(attribute.BorderRound),
       attribute.width(
-        case song.value {
+        case song_value {
           rd.NotAsked -> 20
           rd.Loading -> 20
           rd.Success(song) ->
@@ -148,9 +153,16 @@ fn view_player(
     ],
     [
       pink.box([attribute.height(attribute.Spaces(1))], [
-        pink.text([], view_play_button(player.is_playing(player.value))),
+        pink.text(
+          [],
+          view_play_button(
+            player
+            |> state.get
+            |> player.is_playing,
+          ),
+        ),
       ]),
-      view_song(song.value),
+      view_song(song_value),
     ],
   )
 }
@@ -168,6 +180,7 @@ fn view_song(song: rd.RemoteData(Song, String)) {
       pink.text([], message),
     ])
   }
+
   case song {
     rd.NotAsked -> show_message([], "Song not loaded")
     rd.Loading ->
@@ -190,39 +203,40 @@ fn view_song(song: rd.RemoteData(Song, String)) {
   }
 }
 
-fn view_stations(
-  selected: hook.State(Station),
-  stations: hook.State(ZipList(Station)),
-) {
+fn view_stations(selected: State(Station), stations: State(ZipList(Station))) {
+  let station_list = [
+    ChristianRock,
+    ChristianHits,
+    GospelMix,
+    LofiGirl,
+    Melodia,
+  ]
+
   pink.box(
     [
       attribute.border_style(attribute.BorderRound),
       attribute.flex_direction(attribute.FlexColumn),
     ],
-    [
-      view_station(ChristianRock, selected, stations),
-      view_station(ChristianHits, selected, stations),
-      view_station(GospelMix, selected, stations),
-      view_station(LofiGirl, selected, stations),
-      view_station(Melodia, selected, stations),
-    ],
+    list.map(station_list, fn(station) {
+      view_station(station, selected, stations)
+    }),
   )
 }
 
 fn view_station(
   station: Station,
-  selected: hook.State(Station),
-  stations: hook.State(ZipList(Station)),
+  selected: State(Station),
+  stations: State(ZipList(Station)),
 ) {
   let cursor = fn(station_) {
-    case station_ == zip_list.current(stations.value) {
+    case station_ == zip_list.current(state.get(stations)) {
       True -> "> "
       False -> "  "
     }
   }
 
   let selected_attributes = fn(station_) {
-    case station_ == selected.value {
+    case station_ == state.get(selected) {
       True -> [attribute.bold(True), attribute.underline(True)]
       False -> []
     }
@@ -238,8 +252,8 @@ fn view_station(
 
 fn get_song(
   station: Station,
-  song_state: hook.State(rd.RemoteData(Song, String)),
-  timer: hook.State(Option(global.TimerID)),
+  song_state: State(rd.RemoteData(Song, String)),
+  timer: State(Option(global.TimerID)),
 ) -> Nil {
   station
   |> station.get_song
@@ -248,15 +262,19 @@ fn get_song(
       Ok(new_song) ->
         new_song
         |> rd.Success
-        |> song_state.set
+        |> state.set(song_state, _)
       Error(error) ->
-        song_state.set(rd.Failure(
-          "Failed to load song: " <> string.inspect(error),
-        ))
+        state.set(
+          song_state,
+          rd.Failure("Failed to load song: " <> string.inspect(error)),
+        )
     }
   })
   |> promise.rescue(fn(error) {
-    song_state.set(rd.Failure("Failed to load song: " <> string.inspect(error)))
+    state.set(
+      song_state,
+      rd.Failure("Failed to load song: " <> string.inspect(error)),
+    )
     Error(fetch.UnableToReadBody)
   })
   |> promise.tap(fn(_) {
@@ -264,7 +282,7 @@ fn get_song(
       get_song(station, song_state, timer)
     })
     |> option.Some
-    |> timer.set
+    |> state.set(timer, _)
   })
 
   Nil
@@ -272,19 +290,24 @@ fn get_song(
 
 fn change_station(
   station: Station,
-  player: hook.State(Player),
-  song: hook.State(rd.RemoteData(Song, String)),
-  timer: hook.State(Option(global.TimerID)),
+  player: State(Player),
+  song: State(rd.RemoteData(Song, String)),
+  timer: State(Option(global.TimerID)),
 ) {
-  song.set(rd.Loading)
-  player.quit(player.value)
+  state.set(song, rd.Loading)
+  player
+  |> state.get
+  |> player.quit
+
   station
   |> station.stream
   |> player.new
   |> player.play
-  |> player.set
+  |> state.set(player, _)
 
-  option.map(timer.value, global.clear_timeout)
+  timer
+  |> state.get
+  |> option.map(global.clear_timeout)
 
   global.set_timeout(0, fn() { get_song(station, song, timer) })
 
