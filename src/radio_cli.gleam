@@ -15,12 +15,16 @@ import plinth/javascript/global
 import remote_data as rd
 import song.{type Song}
 import station.{
-  type Station, ChristianHits, ChristianRock, GospelMix, LofiGirl, Melodia,
+  type Station, ChristianHits, ChristianLofi, ChristianRock, GospelMix, Melodia,
 }
 import zip_list.{type ZipList}
 
 /// Time in milliseconds to wait before fetching the current song again
 const get_song_frequency = 30_000
+
+const first_station = ChristianRock
+
+const rest_stations = [ChristianHits, ChristianLofi, GospelMix, Melodia]
 
 pub fn main() {
   console.clear()
@@ -33,15 +37,7 @@ fn app() {
   let app = app.get()
   let song = state.init(rd.Loading)
   let timer = state.init(option.None)
-  let stations =
-    state.init(
-      zip_list.new([], ChristianRock, [
-        ChristianHits,
-        GospelMix,
-        LofiGirl,
-        Melodia,
-      ]),
-    )
+  let stations = state.init(zip_list.new([], first_station, rest_stations))
   let selected: State(Station) =
     stations
     |> state.get
@@ -204,13 +200,7 @@ fn view_song(song: rd.RemoteData(Song, String)) {
 }
 
 fn view_stations(selected: State(Station), stations: State(ZipList(Station))) {
-  let station_list = [
-    ChristianRock,
-    ChristianHits,
-    GospelMix,
-    LofiGirl,
-    Melodia,
-  ]
+  let station_list = [first_station, ..rest_stations]
 
   pink.box(
     [

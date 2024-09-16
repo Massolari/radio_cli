@@ -8,16 +8,16 @@ pub type Station {
   ChristianHits
   ChristianRock
   GospelMix
-  LofiGirl
+  ChristianLofi
   Melodia
 }
 
 pub fn to_string(station: Station) {
   case station {
     ChristianHits -> "Christian Hits"
+    ChristianLofi -> "Christian Lo-fi"
     ChristianRock -> "Christian Rock"
     GospelMix -> "Gospel Mix"
-    LofiGirl -> "Lofi Girl"
     Melodia -> "Melodia"
   }
 }
@@ -25,10 +25,9 @@ pub fn to_string(station: Station) {
 pub fn stream(station: Station) {
   case station {
     ChristianHits -> "https://listen.christianrock.net/stream/12/"
+    ChristianLofi -> "https://www.youtube.com/embed/-YJmGR2tD0k"
     ChristianRock -> "https://listen.christianrock.net/stream/11/"
     GospelMix -> "https://servidor33-3.brlogic.com:8192/live"
-    LofiGirl ->
-      "https://www.youtube.com/embed/jfKfPfyJRdk?origin=https%3A%2F%2Flofimusic.app&autoplay=1&modestbranding=1&disablekb=1&iv_load_policy=3&playsinline=1"
     Melodia -> "https://14543.live.streamtheworld.com/MELODIAFMAAC.aac"
   }
 }
@@ -36,13 +35,13 @@ pub fn stream(station: Station) {
 pub fn get_song(station: Station) {
   case station {
     ChristianHits -> get_christian_hits()
-    ChristianRock -> get_christian_rock()
-    GospelMix -> get_gospel_mix()
-    LofiGirl ->
-      LofiGirl
+    ChristianLofi ->
+      ChristianLofi
       |> get_no_song
       |> Ok
       |> promise.resolve
+    ChristianRock -> get_christian_rock()
+    GospelMix -> get_gospel_mix()
     Melodia -> get_melodia()
   }
 }
