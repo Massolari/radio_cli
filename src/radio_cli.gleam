@@ -12,6 +12,7 @@ import pink/state.{type State}
 import player.{type Player}
 import plinth/javascript/console
 import plinth/javascript/global
+import plinth/node/process
 import remote_data as rd
 import song.{type Song}
 import station.{
@@ -98,6 +99,8 @@ fn app() {
           |> option.map(fn(timer) { global.clear_timeout(timer) })
 
           app.exit(app)
+          process.exit(0)
+          Nil
         }
         _ -> Nil
       }
