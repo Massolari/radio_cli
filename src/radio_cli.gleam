@@ -136,14 +136,16 @@ fn view_player(song: State(rd.RemoteData(Song, String)), player: State(Player)) 
       attribute.flex_direction(attribute.FlexColumn),
       attribute.justify_content(attribute.ContentCenter),
       attribute.align_items(attribute.ItemsCenter),
-      attribute.border_style(attribute.BorderRound),
+      attribute.border_style(attribute.BorderSingle),
       attribute.width(
         case song_value {
           rd.NotAsked -> 20
           rd.Loading -> 20
           rd.Success(song) ->
-            int.max(song.title |> string.length, song.artist |> string.length)
-            + 10
+            song.title
+            |> string.length
+            |> int.max(string.length(song.artist))
+            |> int.add(10)
           rd.Failure(error) -> string.length(error) + 10
         }
         |> attribute.Spaces,
@@ -151,16 +153,14 @@ fn view_player(song: State(rd.RemoteData(Song, String)), player: State(Player)) 
       attribute.padding_x(4),
     ],
     [
-      pink.box([attribute.height(attribute.Spaces(1))], [
-        pink.text(
-          [],
-          view_play_button(
-            player
-            |> state.get
-            |> player.is_playing,
-          ),
+      pink.text(
+        [],
+        view_play_button(
+          player
+          |> state.get
+          |> player.is_playing,
         ),
-      ]),
+      ),
       view_song(song_value),
     ],
   )
@@ -207,8 +207,9 @@ fn view_stations(selected: State(Station), stations: State(ZipList(Station))) {
 
   pink.box(
     [
-      attribute.border_style(attribute.BorderRound),
+      attribute.border_style(attribute.BorderSingle),
       attribute.flex_direction(attribute.FlexColumn),
+      attribute.padding_right(1),
     ],
     list.map(station_list, fn(station) {
       view_station(station, selected, stations)
@@ -221,11 +222,9 @@ fn view_station(
   selected: State(Station),
   stations: State(ZipList(Station)),
 ) {
-  let cursor = fn(station_) {
-    case station_ == zip_list.current(state.get(stations)) {
-      True -> "> "
-      False -> "  "
-    }
+  let cursor = case station == zip_list.current(state.get(stations)) {
+    True -> "> "
+    False -> "  "
   }
 
   let selected_attributes = fn(station_) {
@@ -236,7 +235,7 @@ fn view_station(
   }
 
   pink.text_nested([], [
-    pink.text([], cursor(station)),
+    pink.text([], cursor),
     pink.text(selected_attributes(station), station.to_string(station)),
   ])
 }
