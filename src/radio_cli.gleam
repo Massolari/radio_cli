@@ -59,7 +59,7 @@ fn app() {
             player_value
             |> case player.is_playing(player_value) {
               True -> player.stop
-              False -> player.play
+              False -> player.resume
             }
           })
 
@@ -107,7 +107,7 @@ fn app() {
 
   hook.effect(
     fn() {
-      state.set_with(player, player.play)
+      state.set_with(player, player.resume)
 
       selected
       |> state.get
@@ -285,15 +285,9 @@ fn change_station(
   timer: State(Option(global.TimerID)),
 ) {
   state.set(song, rd.Loading)
-  player
-  |> state.get
-  |> player.quit
 
-  station
-  |> station.stream
-  |> player.new
-  |> player.play
-  |> state.set(player, _)
+  player
+  |> state.set_with(player.play(_, station.stream(state.get(station))))
 
   timer
   |> state.get

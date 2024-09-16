@@ -11,14 +11,26 @@ pub fn new(url: String) {
   Player(url:, is_playing: False, process: None)
 }
 
-pub fn play(player: Player) {
+pub fn play(player: Player, url: String) {
   let new_process = case player.process {
     None -> child_process.spawn("vlc", ["-I", "rc", player.url])
     Some(process) -> {
-      let _ =
-        process
-        |> child_process.stdin
-        |> result.map(stream.write(_, "play\n"))
+      let _ = send_process_command(process, "clear\n")
+      let _ = send_process_command(process, "add " <> url <> "\n")
+      let _ = send_process_command(process, "play\n")
+
+      process
+    }
+  }
+
+  Player(..player, is_playing: True, process: Some(new_process))
+}
+
+pub fn resume(player: Player) {
+  let new_process = case player.process {
+    None -> child_process.spawn("vlc", ["-I", "rc", player.url])
+    Some(process) -> {
+      let _ = send_process_command(process, "play\n")
 
       process
     }
@@ -28,12 +40,7 @@ pub fn play(player: Player) {
 }
 
 pub fn stop(player: Player) {
-  player.process
-  |> option.map(fn(process) {
-    process
-    |> child_process.stdin
-    |> result.map(stream.write(_, "stop\n"))
-  })
+  send_command(player, "stop\n")
 
   Player(..player, is_playing: False)
 }
@@ -43,8 +50,19 @@ pub fn is_playing(player: Player) -> Bool {
 }
 
 pub fn quit(player: Player) {
+  send_command(player, "quit\n")
   player.process
   |> option.map(fn(process) { child_process.kill(process) })
 
   player
+}
+
+fn send_command(player: Player, command: String) {
+  option.map(player.process, send_process_command(_, command))
+}
+
+fn send_process_command(process: ChildProcess, command: String) {
+  process
+  |> child_process.stdin
+  |> result.map(stream.write(_, command))
 }
