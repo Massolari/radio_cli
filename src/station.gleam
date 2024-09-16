@@ -56,18 +56,6 @@ fn get_christian_hits() {
   // Send the HTTP request to the server
   use response <- promise.try_await(
     request
-    |> request.set_cookie("Saw2023CyberMonday", "Y")
-    |> request.set_cookie("SawOctober2023Splash", "Y")
-    |> request.set_cookie("SawFundraiser2023_0", "Y")
-    |> request.set_cookie("SawFundraiser2023_2", "Y")
-    |> request.set_cookie("SawFundraiser2023_3", "Y")
-    |> request.prepend_header("accept", "application/json")
-    |> request.prepend_header("host", "www.christianrock.net")
-    |> request.prepend_header(
-      "referer",
-      "https://www.christianrock.net/player.php?site=CRDN",
-    )
-    |> request.prepend_header("X-Requested-With", "XMLHttpRequest")
     |> fetch.send,
   )
 
@@ -85,18 +73,6 @@ fn get_christian_rock() {
   // Send the HTTP request to the server
   use response <- promise.try_await(
     request
-    |> request.set_cookie("Saw2023CyberMonday", "Y")
-    |> request.set_cookie("SawOctober2023Splash", "Y")
-    |> request.set_cookie("SawFundraiser2023_0", "Y")
-    |> request.set_cookie("SawFundraiser2023_2", "Y")
-    |> request.set_cookie("SawFundraiser2023_3", "Y")
-    |> request.prepend_header("accept", "application/json")
-    |> request.prepend_header("host", "www.christianrock.net")
-    |> request.prepend_header(
-      "referer",
-      "https://www.christianrock.net/player.php?site=CRDN",
-    )
-    |> request.prepend_header("X-Requested-With", "XMLHttpRequest")
     |> fetch.send,
   )
 
@@ -116,9 +92,6 @@ fn get_gospel_mix() {
   // Send the HTTP request to the server
   use response <- promise.try_await(
     request
-    |> request.prepend_header("accept", "application/json")
-    |> request.prepend_header("host", "d36nr0u3xmc4mm.cloudfront.net")
-    |> request.prepend_header("X-Requested-With", "XMLHttpRequest")
     |> fetch.send,
   )
 
