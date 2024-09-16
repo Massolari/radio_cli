@@ -12,28 +12,24 @@ pub fn new(url: String) {
 }
 
 pub fn play(player: Player, url: String) {
-  let new_process = case player.process {
-    None -> child_process.spawn("vlc", ["-I", "rc", player.url])
-    Some(process) -> {
-      let _ = send_process_command(process, "clear\n")
-      let _ = send_process_command(process, "add " <> url <> "\n")
-      let _ = send_process_command(process, "play\n")
+  let new_process = {
+    use process <- run_if_process_exists(player)
+    let _ = send_process_command(process, "clear\n")
+    let _ = send_process_command(process, "add " <> url <> "\n")
+    let _ = send_process_command(process, "play\n")
 
-      process
-    }
+    process
   }
 
-  Player(..player, is_playing: True, process: Some(new_process))
+  Player(url:, is_playing: True, process: Some(new_process))
 }
 
 pub fn resume(player: Player) {
-  let new_process = case player.process {
-    None -> child_process.spawn("vlc", ["-I", "rc", player.url])
-    Some(process) -> {
-      let _ = send_process_command(process, "play\n")
+  let new_process = {
+    use process <- run_if_process_exists(player)
+    let _ = send_process_command(process, "play\n")
 
-      process
-    }
+    process
   }
 
   Player(..player, is_playing: True, process: Some(new_process))
@@ -57,6 +53,14 @@ pub fn quit(player: Player) {
   player
 }
 
+pub fn restart(player: Player) {
+  quit(player)
+
+  player.url
+  |> new
+  |> resume
+}
+
 fn send_command(player: Player, command: String) {
   option.map(player.process, send_process_command(_, command))
 }
@@ -65,4 +69,11 @@ fn send_process_command(process: ChildProcess, command: String) {
   process
   |> child_process.stdin
   |> result.map(stream.write(_, command))
+}
+
+fn run_if_process_exists(player: Player, f: fn(ChildProcess) -> ChildProcess) {
+  case player.process {
+    None -> child_process.spawn("vlc", ["-I", "rc", player.url])
+    Some(process) -> f(process)
+  }
 }
