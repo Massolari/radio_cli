@@ -1,8 +1,9 @@
+import birl
+import birl/duration
 import gleam/fetch
 import gleam/int
 import gleam/javascript/promise
 import gleam/list
-import gleam/option.{type Option}
 import gleam/string
 import pink
 import pink/app
@@ -20,8 +21,11 @@ import station.{
 }
 import zip_list.{type ZipList}
 
-/// Time in milliseconds to wait before fetching the current song again
-const get_song_frequency = 30_000
+@external(javascript, "./ffi.mjs", "setInterval")
+fn set_interval(time: Int, handler: fn() -> Nil) -> global.TimerID
+
+@external(javascript, "./ffi.mjs", "clearInterval")
+fn clear_interval(timer: global.TimerID) -> Nil
 
 const first_station = ChristianRock
 
@@ -37,7 +41,8 @@ fn app() {
 
   let app = app.get()
   let song = state.init(rd.Loading)
-  let timer = state.init(option.None)
+  let counter = state.init(0)
+  let song_last_updated = state.init(birl.now())
   let stations = state.init(zip_list.new([], first_station, rest_stations))
   let selected: State(Station) =
     stations
@@ -66,11 +71,36 @@ fn app() {
 
         "j" -> state.set_with(stations, zip_list.next_warp)
 
+        "J" -> {
+          let next_stations =
+            stations
+            |> state.get
+            |> zip_list.next_warp
+
+          state.set(stations, next_stations)
+          state.set(selected, zip_list.current(next_stations))
+        }
+
         "G" -> state.set_with(stations, zip_list.last)
 
         "k" -> state.set_with(stations, zip_list.previous_warp)
 
+        "K" -> {
+          let previous_stations =
+            stations
+            |> state.get
+            |> zip_list.previous_warp
+
+          state.set(stations, previous_stations)
+          state.set(selected, zip_list.current(previous_stations))
+        }
+
         "g" -> state.set_with(stations, zip_list.first)
+
+        "r" -> {
+          state.set(song, rd.Loading)
+          get_song(selected, song, song_last_updated)
+        }
 
         "\r" -> {
           let station =
@@ -89,10 +119,6 @@ fn app() {
           |> state.get
           |> player.quit
 
-          timer
-          |> state.get
-          |> option.map(fn(timer) { global.clear_timeout(timer) })
-
           app.exit(app)
           process.exit(0)
           Nil
@@ -103,20 +129,38 @@ fn app() {
     True,
   )
 
-  hook.effect(
+  hook.effect_clean(
     fn() {
       state.set_with(player, player.resume)
 
-      get_song(selected, song, timer)
+      get_song(selected, song, song_last_updated)
 
-      Nil
+      let timer_id =
+        set_interval(1000, fn() { state.set_with(counter, int.add(_, 1)) })
+
+      fn() { clear_interval(timer_id) }
     },
     [],
   )
 
-  hook.effect(fn() { change_station(selected, player, song, timer) }, [
-    state.get(selected),
-  ])
+  hook.effect(
+    fn() {
+      let difference = birl.difference(birl.now(), state.get(song_last_updated))
+
+      case duration.blur_to(difference, duration.Second) >= 30 {
+        False -> Nil
+        True -> {
+          get_song(selected, song, song_last_updated)
+        }
+      }
+    },
+    [state.get(counter)],
+  )
+
+  hook.effect(
+    fn() { change_station(selected, player, song, song_last_updated) },
+    [state.get(selected)],
+  )
 
   pink.box([], [
     view_stations(selected, stations),
@@ -134,6 +178,7 @@ fn view_player(song: State(rd.RemoteData(Song, String)), player: State(Player)) 
       attribute.justify_content(attribute.ContentCenter),
       attribute.align_items(attribute.ItemsCenter),
       attribute.border_style(attribute.BorderSingle),
+      attribute.min_width(20),
       attribute.width(
         case song_value {
           rd.NotAsked -> 20
@@ -142,12 +187,13 @@ fn view_player(song: State(rd.RemoteData(Song, String)), player: State(Player)) 
             song.title
             |> string.length
             |> int.max(string.length(song.artist))
-            |> int.add(10)
-          rd.Failure(error) -> string.length(error) + 10
+            |> int.add(6)
+            |> int.max(20)
+          rd.Failure(error) -> string.length(error)
         }
         |> attribute.Spaces,
       ),
-      attribute.padding_x(4),
+      attribute.padding_x(2),
     ],
     [
       pink.text(
@@ -224,16 +270,14 @@ fn view_station(
     False -> "  "
   }
 
-  let selected_attributes = fn(station_) {
-    case station_ == state.get(selected) {
-      True -> [attribute.bold(True), attribute.underline(True)]
-      False -> []
-    }
+  let selected_attributes = case station == state.get(selected) {
+    True -> [attribute.bold(True), attribute.underline(True)]
+    False -> []
   }
 
   pink.text_nested([], [
     pink.text([], cursor),
-    pink.text(selected_attributes(station), station.to_string(station)),
+    pink.text(selected_attributes, station.to_string(station)),
   ])
 }
 
@@ -242,8 +286,10 @@ fn view_station(
 fn get_song(
   station: State(Station),
   song_state: State(rd.RemoteData(Song, String)),
-  timer: State(Option(global.TimerID)),
+  song_last_updated: State(birl.Time),
 ) -> Nil {
+  state.set(song_last_updated, birl.now())
+
   station
   |> state.get
   |> station.get_song
@@ -271,13 +317,6 @@ fn get_song(
     )
     Error(fetch.UnableToReadBody)
   })
-  |> promise.tap(fn(_) {
-    global.set_timeout(get_song_frequency, fn() {
-      get_song(station, song_state, timer)
-    })
-    |> option.Some
-    |> state.set(timer, _)
-  })
 
   Nil
 }
@@ -286,17 +325,12 @@ fn change_station(
   station: State(Station),
   player: State(Player),
   song: State(rd.RemoteData(Song, String)),
-  timer: State(Option(global.TimerID)),
+  song_last_updated: State(birl.Time),
 ) {
   state.set(song, rd.Loading)
 
   player
   |> state.set_with(player.play(_, station.stream(state.get(station))))
 
-  timer
-  |> state.get
-  |> option.map(global.clear_timeout)
-
-  get_song(station, song, timer)
-  Nil
+  get_song(station, song, song_last_updated)
 }

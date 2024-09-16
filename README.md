@@ -26,9 +26,12 @@ It has the following stations:
 ### Keys
 
 - `j` to move the cursor to the next station
+- `J` to move the cursor to the next station and play it
 - `G` to move the cursor to the last station
 - `k` to move the cursor to the previous station
+- `K` to move the cursor to the previous station and play it
 - `g` to move the cursor to the first station
+- `r` to refresh the current playing song
 - `Enter` to select the station
 - `q` to quit
 - `Space` to play/pause
