@@ -32,6 +32,7 @@ It has the following stations:
 - `K` to move the cursor to the previous station and play it
 - `g` to move the cursor to the first station
 - `r` to refresh the current playing song
+- `R` to restart the player
 - `Enter` to select the station
 - `q` to quit
 - `Space` to play/pause

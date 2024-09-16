@@ -102,6 +102,8 @@ fn app() {
           get_song(selected, song, song_last_updated)
         }
 
+        "R" -> state.set_with(player, player.restart)
+
         "\r" -> {
           let station =
             stations
