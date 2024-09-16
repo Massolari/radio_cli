@@ -32,7 +32,9 @@ pub fn stream(station: Station) {
   }
 }
 
-pub fn get_song(station: Station) {
+pub fn get_song(
+  station: Station,
+) -> Promise(Result(#(Station, Song), fetch.FetchError)) {
   case station {
     ChristianHits -> get_christian_hits()
     ChristianLofi ->
@@ -44,6 +46,7 @@ pub fn get_song(station: Station) {
     GospelMix -> get_gospel_mix()
     Melodia -> get_melodia()
   }
+  |> promise.map(result.map(_, fn(song) { #(station, song) }))
 }
 
 fn get_christian_hits() {

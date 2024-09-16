@@ -80,12 +80,7 @@ fn app() {
 
           case station == state.get(selected) {
             True -> Nil
-            False -> {
-              state.set(selected, station)
-
-              station
-              |> change_station(player, song, timer)
-            }
+            False -> state.set(selected, station)
           }
         }
 
@@ -112,14 +107,16 @@ fn app() {
     fn() {
       state.set_with(player, player.resume)
 
-      selected
-      |> state.get
-      |> get_song(song, timer)
+      get_song(selected, song, timer)
 
       Nil
     },
     [],
   )
+
+  hook.effect(fn() { change_station(selected, player, song, timer) }, [
+    state.get(selected),
+  ])
 
   pink.box([], [
     view_stations(selected, stations),
@@ -243,18 +240,23 @@ fn view_station(
 // Helper
 
 fn get_song(
-  station: Station,
+  station: State(Station),
   song_state: State(rd.RemoteData(Song, String)),
   timer: State(Option(global.TimerID)),
 ) -> Nil {
   station
+  |> state.get
   |> station.get_song
   |> promise.tap(fn(result_song) {
     case result_song {
-      Ok(new_song) ->
-        new_song
-        |> rd.Success
-        |> state.set(song_state, _)
+      Ok(station_song) ->
+        case station_song.0 == state.get(station) {
+          True ->
+            station_song.1
+            |> rd.Success
+            |> state.set(song_state, _)
+          False -> Nil
+        }
       Error(error) ->
         state.set(
           song_state,
@@ -281,7 +283,7 @@ fn get_song(
 }
 
 fn change_station(
-  station: Station,
+  station: State(Station),
   player: State(Player),
   song: State(rd.RemoteData(Song, String)),
   timer: State(Option(global.TimerID)),
@@ -295,7 +297,6 @@ fn change_station(
   |> state.get
   |> option.map(global.clear_timeout)
 
-  global.set_timeout(0, fn() { get_song(station, song, timer) })
-
+  get_song(station, song, timer)
   Nil
 }
