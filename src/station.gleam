@@ -25,7 +25,8 @@ pub fn to_string(station: Station) {
 pub fn stream(station: Station) {
   case station {
     ChristianHits -> "https://listen.christianrock.net/stream/12/"
-    ChristianLofi -> "https://www.youtube.com/embed/-YJmGR2tD0k"
+    ChristianLofi ->
+      "https://www.youtube.com/embed/qXPoj_VYb3U?si=ISaDfqexI9Ng6jPw"
     ChristianRock -> "https://listen.christianrock.net/stream/11/"
     GospelMix -> "https://servidor33-3.brlogic.com:8192/live"
     Melodia -> "https://14543.live.streamtheworld.com/MELODIAFMAAC.aac"
