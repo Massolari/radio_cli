@@ -11,29 +11,35 @@ pub type Song {
 pub fn gospel_mix_decoder(
   json: Dynamic,
 ) -> Result(Song, List(dynamic.DecodeError)) {
-  dynamic.decode1(
-    fn(track: String) {
-      let splitted =
-        track
-        |> string.split(" - ")
-        |> list.filter_map(fn(part) {
-          case int.parse(part) {
-            Ok(_) -> Error(Nil)
-            Error(_) ->
-              case part {
-                "Ao Vivo" -> Error(Nil)
-                _ -> Ok(part)
-              }
-          }
-        })
+  dynamic.any([
+    dynamic.decode1(
+      fn(track: String) {
+        let splitted =
+          track
+          |> string.split(" - ")
+          |> list.filter_map(fn(part) {
+            case int.parse(part) {
+              Ok(_) -> Error(Nil)
+              Error(_) ->
+                case part {
+                  "Ao Vivo" -> Error(Nil)
+                  _ -> Ok(part)
+                }
+            }
+          })
 
-      case splitted {
-        [artist, title] -> Song(artist, title)
-        _ -> Song(artist: "", title: track)
-      }
-    },
-    dynamic.field("currentTrack", of: dynamic.string),
-  )(json)
+        case splitted {
+          [artist, title] -> Song(artist, title)
+          _ -> Song(artist: "", title: track)
+        }
+      },
+      dynamic.field("currentTrack", of: dynamic.string),
+    ),
+    dynamic.decode1(
+      fn(_) { Song(artist: "Unknown", title: "Unknown") },
+      dynamic.field("currentTrack", dynamic.bool),
+    ),
+  ])(json)
 }
 
 pub fn christianrock_decoder(

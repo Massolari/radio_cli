@@ -28,7 +28,7 @@ pub fn stream(station: Station) {
     ChristianLofi ->
       "https://www.youtube.com/embed/qXPoj_VYb3U?si=ISaDfqexI9Ng6jPw"
     ChristianRock -> "https://listen.christianrock.net/stream/11/"
-    GospelMix -> "https://servidor33-3.brlogic.com:8192/live"
+    GospelMix -> "https://servidor23-3.brlogic.com:7108/live"
     Melodia -> "https://14543.live.streamtheworld.com/MELODIAFMAAC.aac"
   }
 }
