@@ -1,8 +1,9 @@
+import gleam/dynamic/decode
 import gleam/fetch
 import gleam/http/request
 import gleam/javascript/promise.{type Promise}
 import gleam/result
-import song.{type Song}
+import song.{type Song, Song}
 
 pub type Station {
   ChristianHits
@@ -63,7 +64,7 @@ fn get_christian_hits() {
   use json <- promise.map_try(fetch.read_json_body(response))
 
   json.body
-  |> song.christianrock_decoder
+  |> decode.run(song.christianrock_decoder())
   |> result.map_error(fn(_err) { fetch.InvalidJsonBody })
 }
 
@@ -80,7 +81,7 @@ fn get_christian_rock() {
   use json <- promise.map_try(fetch.read_json_body(response))
 
   json.body
-  |> song.christianrock_decoder
+  |> decode.run(song.christianrock_decoder())
   |> result.map_error(fn(_err) { fetch.InvalidJsonBody })
 }
 
@@ -99,8 +100,9 @@ fn get_gospel_mix() {
   use json <- promise.map_try(fetch.read_json_body(response))
 
   json.body
-  |> song.gospel_mix_decoder
-  |> result.map_error(fn(_err) { fetch.InvalidJsonBody })
+  |> decode.run(song.gospel_mix_decoder())
+  |> result.unwrap(Song(artist: "Unknown", title: "Unknown"))
+  |> Ok
 }
 
 fn get_melodia() {

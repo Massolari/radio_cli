@@ -69,13 +69,13 @@ fn app() {
             }
           })
 
-        "j" -> state.set_with(stations, zip_list.next_warp)
+        "j" -> state.set_with(stations, zip_list.next_wrap)
 
         "J" -> {
           let next_stations =
             stations
             |> state.get
-            |> zip_list.next_warp
+            |> zip_list.next_wrap
 
           state.set(stations, next_stations)
           state.set(selected, zip_list.current(next_stations))
@@ -83,13 +83,13 @@ fn app() {
 
         "G" -> state.set_with(stations, zip_list.last)
 
-        "k" -> state.set_with(stations, zip_list.previous_warp)
+        "k" -> state.set_with(stations, zip_list.previous_wrap)
 
         "K" -> {
           let previous_stations =
             stations
             |> state.get
-            |> zip_list.previous_warp
+            |> zip_list.previous_wrap
 
           state.set(stations, previous_stations)
           state.set(selected, zip_list.current(previous_stations))
