@@ -3,6 +3,7 @@ import gleam/fetch
 import gleam/http/request
 import gleam/javascript/promise.{type Promise}
 import gleam/result
+import gleam/string
 import song.{type Song, Song}
 
 pub type Station {
@@ -25,10 +26,10 @@ pub fn to_string(station: Station) {
 
 pub fn stream(station: Station) {
   case station {
-    ChristianHits -> "https://listen.christianrock.net/stream/12/"
+    ChristianHits -> "http://listen.christianrock.net/stream/12/"
     ChristianLofi ->
       "https://www.youtube.com/embed/qXPoj_VYb3U?si=ISaDfqexI9Ng6jPw"
-    ChristianRock -> "https://listen.christianrock.net/stream/11/"
+    ChristianRock -> "http://listen.christianrock.net/stream/11/"
     GospelMix -> "https://servidor23-3.brlogic.com:7108/live"
     Melodia -> "https://14543.live.streamtheworld.com/MELODIAFMAAC.aac"
   }
@@ -126,4 +127,11 @@ fn get_melodia() {
 
 fn get_no_song(station: Station) {
   song.Song(artist: to_string(station), title: "No song information available")
+}
+
+pub fn get_song_from_metadata(metadata: String) -> Song {
+  case string.split(metadata, " - ") {
+    [artist, title] -> song.Song(artist:, title:)
+    _ -> song.Song(artist: "Unknown", title: metadata)
+  }
 }

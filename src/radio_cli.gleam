@@ -147,12 +147,29 @@ fn app() {
 
   hook.effect(
     fn() {
-      let difference = birl.difference(birl.now(), state.get(song_last_updated))
+      let metadata_song = player.get_now_playing(state.get(player))
+      case metadata_song {
+        Ok(metatada) -> {
+          metatada
+          |> station.get_song_from_metadata
+          |> rd.Success
+          |> state.set(song, _)
 
-      case duration.blur_to(difference, duration.Second) >= 30 {
-        False -> Nil
-        True -> {
-          get_song(selected, song, song_last_updated)
+          state.set(
+            song_last_updated,
+            birl.now() |> birl.subtract(duration.seconds(30)),
+          )
+        }
+        Error(_) -> {
+          let difference =
+            birl.difference(birl.now(), state.get(song_last_updated))
+
+          case duration.blur_to(difference, duration.Second) >= 30 {
+            False -> Nil
+            True -> {
+              get_song(selected, song, song_last_updated)
+            }
+          }
         }
       }
     },

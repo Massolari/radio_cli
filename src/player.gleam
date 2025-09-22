@@ -1,7 +1,17 @@
+import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
+import gleam/string
 import plinth/node/child_process.{type ChildProcess}
 import plinth/node/stream
+
+type Readable
+
+@external(javascript, "./player_ffi.mjs", "stdout")
+fn stdout(process: ChildProcess) -> Result(Readable, Nil)
+
+@external(javascript, "./player_ffi.mjs", "read")
+fn stream_read(stream: Readable) -> Result(String, Nil)
 
 pub opaque type Player {
   Player(url: String, is_playing: Bool, process: Option(ChildProcess))
@@ -76,4 +86,23 @@ fn run_if_process_exists(player: Player, f: fn(ChildProcess) -> ChildProcess) {
     None -> child_process.spawn("vlc", ["-I", "rc", player.url])
     Some(process) -> f(process)
   }
+}
+
+pub fn get_now_playing(player: Player) -> Result(String, Nil) {
+  use process <- result.try(option.to_result(player.process, Nil))
+  use _ <- result.try(send_process_command(process, "info\n"))
+
+  process
+  |> stdout
+  |> result.try(stream_read)
+  |> result.try(fn(output) {
+    output
+    |> string.split("\n")
+    |> list.find_map(fn(line) {
+      case line {
+        "| now_playing: " <> playing -> Ok(string.trim(playing))
+        _ -> Error(Nil)
+      }
+    })
+  })
 }
