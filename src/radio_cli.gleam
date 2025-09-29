@@ -17,7 +17,7 @@ import plinth/node/process
 import remote_data as rd
 import song.{type Song}
 import station.{
-  type Station, ChristianHits, ChristianLofi, ChristianRock, GospelMix, Melodia,
+  type Station, ChristianHits, ChristianLofi, ChristianRock, GospelHits, Melodia,
 }
 import zip_list.{type ZipList}
 
@@ -29,7 +29,7 @@ fn clear_interval(timer: global.TimerID) -> Nil
 
 const first_station = ChristianRock
 
-const rest_stations = [ChristianHits, ChristianLofi, GospelMix, Melodia]
+const rest_stations = [ChristianHits, ChristianLofi, GospelHits, Melodia]
 
 pub fn main() {
   console.clear()
@@ -99,7 +99,7 @@ fn app() {
 
         "r" -> {
           state.set(song, rd.Loading)
-          get_song(selected, song, song_last_updated)
+          get_song(player, selected, song, song_last_updated)
         }
 
         "R" -> state.set_with(player, player.restart)
@@ -135,7 +135,7 @@ fn app() {
     fn() {
       state.set_with(player, player.resume)
 
-      get_song(selected, song, song_last_updated)
+      get_song(player, selected, song, song_last_updated)
 
       let timer_id =
         set_interval(1000, fn() { state.set_with(counter, int.add(_, 1)) })
@@ -145,36 +145,9 @@ fn app() {
     [],
   )
 
-  hook.effect(
-    fn() {
-      let metadata_song = player.get_now_playing(state.get(player))
-      case metadata_song {
-        Ok(metatada) -> {
-          metatada
-          |> station.get_song_from_metadata
-          |> rd.Success
-          |> state.set(song, _)
-
-          state.set(
-            song_last_updated,
-            birl.now() |> birl.subtract(duration.seconds(30)),
-          )
-        }
-        Error(_) -> {
-          let difference =
-            birl.difference(birl.now(), state.get(song_last_updated))
-
-          case duration.blur_to(difference, duration.Second) >= 30 {
-            False -> Nil
-            True -> {
-              get_song(selected, song, song_last_updated)
-            }
-          }
-        }
-      }
-    },
-    [state.get(counter)],
-  )
+  hook.effect(fn() { get_song(player, selected, song, song_last_updated) }, [
+    state.get(counter),
+  ])
 
   hook.effect(
     fn() { change_station(selected, player, song, song_last_updated) },
@@ -303,6 +276,38 @@ fn view_station(
 // Helper
 
 fn get_song(
+  player: State(Player),
+  station: State(Station),
+  song_state: State(rd.RemoteData(Song, String)),
+  song_last_updated: State(birl.Time),
+) -> Nil {
+  let metadata_song = player.get_now_playing(state.get(player))
+  case metadata_song {
+    Ok(metatada) -> {
+      metatada
+      |> station.get_song_from_metadata
+      |> rd.Success
+      |> state.set(song_state, _)
+
+      state.set(
+        song_last_updated,
+        birl.now() |> birl.subtract(duration.seconds(30)),
+      )
+    }
+    Error(_) -> {
+      let difference = birl.difference(birl.now(), state.get(song_last_updated))
+
+      case duration.blur_to(difference, duration.Second) >= 30 {
+        False -> Nil
+        True -> {
+          get_song_from_api(station, song_state, song_last_updated)
+        }
+      }
+    }
+  }
+}
+
+fn get_song_from_api(
   station: State(Station),
   song_state: State(rd.RemoteData(Song, String)),
   song_last_updated: State(birl.Time),
@@ -351,5 +356,5 @@ fn change_station(
   player
   |> state.set_with(player.play(_, station.stream(state.get(station))))
 
-  get_song(station, song, song_last_updated)
+  get_song(player, station, song, song_last_updated)
 }
