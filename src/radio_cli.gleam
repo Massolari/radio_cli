@@ -1,8 +1,6 @@
 import birl
 import birl/duration
-import gleam/fetch
 import gleam/int
-import gleam/javascript/promise
 import gleam/list
 import gleam/string
 import pink
@@ -99,7 +97,8 @@ fn app() {
 
         "r" -> {
           state.set(song, rd.Loading)
-          get_song(player, selected, song, song_last_updated)
+          let _ = get_song(player:, song:, song_last_updated:)
+          Nil
         }
 
         "R" -> state.set_with(player, player.restart)
@@ -135,7 +134,7 @@ fn app() {
     fn() {
       state.set_with(player, player.resume)
 
-      get_song(player, selected, song, song_last_updated)
+      get_song(player:, song:, song_last_updated:)
 
       let timer_id =
         set_interval(1000, fn() { state.set_with(counter, int.add(_, 1)) })
@@ -145,12 +144,21 @@ fn app() {
     [],
   )
 
-  hook.effect(fn() { get_song(player, selected, song, song_last_updated) }, [
-    state.get(counter),
-  ])
+  hook.effect(
+    fn() {
+      let _ = get_song(player:, song:, song_last_updated:)
+      Nil
+    },
+    [
+      state.get(counter),
+    ],
+  )
 
   hook.effect(
-    fn() { change_station(selected, player, song, song_last_updated) },
+    fn() {
+      let _ = change_station(selected, player, song, song_last_updated)
+      Nil
+    },
     [state.get(selected)],
   )
 
@@ -161,7 +169,10 @@ fn app() {
   ])
 }
 
-fn view_player(song: State(rd.RemoteData(Song, String)), player: State(Player)) {
+fn view_player(
+  song: State(rd.RemoteData(Song, String)),
+  player: State(Player),
+) {
   let song_value = state.get(song)
 
   pink.box(
@@ -276,10 +287,9 @@ fn view_station(
 // Helper
 
 fn get_song(
-  player: State(Player),
-  station: State(Station),
-  song_state: State(rd.RemoteData(Song, String)),
-  song_last_updated: State(birl.Time),
+  player player: State(Player),
+  song song_state: State(rd.RemoteData(Song, String)),
+  song_last_updated song_last_updated: State(birl.Time),
 ) -> Nil {
   let metadata_song = player.get_now_playing(state.get(player))
   case metadata_song {
@@ -289,60 +299,18 @@ fn get_song(
       |> rd.Success
       |> state.set(song_state, _)
 
-      state.set(
-        song_last_updated,
-        birl.now() |> birl.subtract(duration.seconds(30)),
-      )
+      state.set(song_last_updated, birl.now())
     }
     Error(_) -> {
       let difference = birl.difference(birl.now(), state.get(song_last_updated))
 
       case duration.blur_to(difference, duration.Second) >= 30 {
         False -> Nil
-        True -> {
-          get_song_from_api(station, song_state, song_last_updated)
-        }
+        True ->
+          state.set(song_state, rd.Failure("Unable to get song information"))
       }
     }
   }
-}
-
-fn get_song_from_api(
-  station: State(Station),
-  song_state: State(rd.RemoteData(Song, String)),
-  song_last_updated: State(birl.Time),
-) -> Nil {
-  state.set(song_last_updated, birl.now())
-
-  station
-  |> state.get
-  |> station.get_song
-  |> promise.tap(fn(result_song) {
-    case result_song {
-      Ok(station_song) ->
-        case station_song.0 == state.get(station) {
-          True ->
-            station_song.1
-            |> rd.Success
-            |> state.set(song_state, _)
-          False -> Nil
-        }
-      Error(error) ->
-        state.set(
-          song_state,
-          rd.Failure("Failed to load song: " <> string.inspect(error)),
-        )
-    }
-  })
-  |> promise.rescue(fn(error) {
-    state.set(
-      song_state,
-      rd.Failure("Failed to load song: " <> string.inspect(error)),
-    )
-    Error(fetch.UnableToReadBody)
-  })
-
-  Nil
 }
 
 fn change_station(
@@ -356,5 +324,5 @@ fn change_station(
   player
   |> state.set_with(player.play(_, station.stream(state.get(station))))
 
-  get_song(player, station, song, song_last_updated)
+  get_song(player:, song:, song_last_updated:)
 }
