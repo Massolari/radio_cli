@@ -1,7 +1,0 @@
-{
-  "main": "./dist/index.mjs",
-  "output": "./dist/sea-prep.blob",
-  "assets": {
-    "package.json": "./package.json"
-  }
-}
