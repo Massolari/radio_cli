@@ -1,7 +1,6 @@
 {
   "name": "radio_cli",
   "version": "1.0.0",
-  "main": "index.js",
   "author": "Douglas M. <douglasmassolari@hotmail.com>",
   "license": "MIT",
   "type": "module",
