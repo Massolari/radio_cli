@@ -306,8 +306,11 @@ fn get_song(
 
       case duration.blur_to(difference, duration.Second) >= 30 {
         False -> Nil
-        True ->
+        True -> {
           state.set(song_state, rd.Failure("Unable to get song information"))
+
+          state.set(song_last_updated, birl.now())
+        }
       }
     }
   }
