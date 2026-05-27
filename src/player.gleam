@@ -95,14 +95,19 @@ pub fn get_now_playing(player: Player) -> Result(String, Nil) {
   process
   |> stdout
   |> result.try(stream_read)
-  |> result.try(fn(output) {
-    output
-    |> string.split("\n")
-    |> list.find_map(fn(line) {
-      case line {
-        "| now_playing: " <> playing -> Ok(string.trim(playing))
-        _ -> Error(Nil)
-      }
-    })
+  |> result.try(extract_now_playing_from_metadata)
+}
+
+@internal
+pub fn extract_now_playing_from_metadata(
+  metadata: String,
+) -> Result(String, Nil) {
+  metadata
+  |> string.split("\n")
+  |> list.find_map(fn(line) {
+    case line {
+      "| now_playing: " <> playing -> Ok(string.trim(playing))
+      _ -> Error(Nil)
+    }
   })
 }

@@ -1,0 +1,7 @@
+---
+version: 2.0.0
+title: get_song_from_metadata
+file: ./test/radio_cli_test.gleam
+test_name: get_song_from_metadata_test
+---
+Song(artist: "NF", title: "Happy")
