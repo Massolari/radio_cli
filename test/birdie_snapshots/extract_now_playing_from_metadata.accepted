@@ -1,0 +1,7 @@
+---
+version: 2.0.0
+title: extract_now_playing_from_metadata
+file: ./test/radio_cli_test.gleam
+test_name: extract_now_playing_from_metadata_test
+---
+Ok("NF - Happy")
